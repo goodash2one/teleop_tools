@@ -2,6 +2,7 @@ import os
 
 from setuptools import find_packages
 from setuptools import setup
+from glob import glob
 
 
 package_name = 'joy_teleop'
@@ -14,8 +15,8 @@ setup(
     packages=find_packages(exclude=['test']),
     data_files=[
         (share_path, ['package.xml']),
-        (os.path.join(share_path, 'config'), [os.path.join('config', 'joy_teleop_example.yaml')]),
-        (os.path.join(share_path, 'launch'), [os.path.join('launch', 'example.launch.py')]),
+        (os.path.join(share_path, 'config'), glob(os.path.join('config', '*.yaml'))),
+        (os.path.join(share_path, 'launch'), glob(os.path.join('launch', '*.py'))),
         (os.path.join('share', 'ament_index', 'resource_index', 'packages'),
          [os.path.join('resource', package_name)]),
     ],

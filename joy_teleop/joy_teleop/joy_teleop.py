@@ -42,6 +42,7 @@ from rclpy.node import Node
 from rclpy.parameter import PARAMETER_SEPARATOR_STRING
 from rosidl_runtime_py import set_message_fields
 import sensor_msgs.msg
+from std_msgs.msg import Empty
 
 
 class JoyTeleopException(Exception):
@@ -85,8 +86,9 @@ class JoyTeleopCommand:
         if axes_name in config:
             self.axes = config[axes_name]
 
-        if len(self.buttons) == 0 and len(self.axes) == 0:
-            raise JoyTeleopException("No buttons or axes configured for command '{}'".format(name))
+        if button_name != "deadman_buttons" or axes_name != "deadman_axes":
+            if len(self.buttons) == 0 and len(self.axes) == 0:
+                raise JoyTeleopException("No buttons or axes configured for command '{}'".format(name))
 
         # Used to short-circuit the run command if there aren't enough buttons in the message.
         self.min_button = 0
@@ -172,7 +174,7 @@ class JoyTeleopTopicCommand(JoyTeleopCommand):
                         raise JoyTeleopException("Axis mapping for '{}' must have a scale"
                                                  .format(name))
 
-        if self.msg_value is None and not self.axis_mappings:
+        if self.msg_value is None and not self.axis_mappings and self.topic_type is not Empty:
             raise JoyTeleopException("No 'message_value' or 'axis_mappings' "
                                      "configured for command '{}'".format(name))
         if self.msg_value is not None and self.axis_mappings:
@@ -201,10 +203,12 @@ class JoyTeleopTopicCommand(JoyTeleopCommand):
         self.update_active_from_buttons_and_axes(joy_state)
         if not self.active:
             return
-        if self.msg_value is not None and last_active == self.active:
+        if (self.msg_value is not None or self.topic_type is Empty) and last_active == self.active:
             return
-
-        if self.msg_value is not None:
+        
+        if self.topic_type is Empty:
+            msg = Empty()
+        elif self.msg_value is not None:
             # This is the case for a static message.
             msg = self.msg_value
         else:
